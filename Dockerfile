@@ -52,17 +52,19 @@ RUN kubectl krew update && \
   kubectl krew index add kvaps https://github.com/kvaps/krew-index && \
   kubectl krew install kvaps/node-shell
 
+# Install rust
+ENV PATH="/root/.cargo/bin:$PATH"
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+
 # # Init dotfiles
 RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --hard HEAD
 
 # Init kubeschemas
 RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas
 
-# Install rust
-ENV PATH="/root/.cargo/bin:$PATH"
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-
 # Init neovim
-RUN nvim "+Lazy! install" +MasonInstallAll "+TSInstallSync all" +qa! 
+RUN nvim "+Lazy! install" +qa! 
+RUN nvim "+TSInstallSync all" +qa! 
+RUN nvim "+MasonInstallAll" +qa! 
 
 CMD ["sleep", "infinity"]
