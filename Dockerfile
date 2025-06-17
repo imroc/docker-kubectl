@@ -55,6 +55,7 @@ RUN kubectl krew update && \
 # Install rust
 ENV PATH="/root/.cargo/bin:$PATH"
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+RUN rustup toolchain install nightly
 
 # # Init dotfiles
 RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --hard HEAD
