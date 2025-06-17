@@ -1,0 +1,41 @@
+FROM ubuntu:24.04
+
+# Update apt
+RUN apt-get update -y && apt install -y software-properties-common git yadm neovim
+
+# Enable man pages
+RUN apt install -y man-db unminimize && yes | unminimize
+
+# Set timezone and locale
+RUN DEBIAN_FRONTEND=noninteractive apt install -y tzdata locales && \
+  ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+  dpkg-reconfigure -f noninteractive tzdata && \
+  locale-gen zh_CN.UTF-8 && \
+  update-locale LANG=zh_CN.UTF-8
+
+# Install fish shell
+RUN apt-add-repository ppa:fish-shell/release-4 && \
+  apt update -y && \
+  apt install fish -y
+
+# Install kubectl
+RUN apt-get install -y apt-transport-https ca-certificates curl gnupg && \ 
+  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
+  && chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg && \
+  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list && \
+  chmod 644 /etc/apt/sources.list.d/kubernetes.list && \
+  apt-get update -y && \
+  apt-get install -y kubectl
+
+# Install dotfiles
+RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git
+
+# Init neovim
+RUN nvim "+Lazy! install" +MasonToolsInstallSync "+TSInstallSync all" +q! 
+
+# Cleanup apt
+RUN apt-get clean autoclean && \
+  apt-get autoremove --yes && \
+  rm -rf /var/lib/{apt,dpkg,cache,log}/
+
+CMD ["sleep", "infinity"]

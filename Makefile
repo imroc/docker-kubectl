@@ -1,5 +1,13 @@
 SHELL := /bin/bash
+
+ifdef RICH
+IMAGE := docker.io/imroc/kubectl:rich
+DOCKERFILE := Dockerfile.rich
+else
 IMAGE := docker.io/imroc/kubectl:latest
+DOCKERFILE := Dockerfile
+endif
+
 
 # CONTAINER_TOOL defines the container tool to be used for building images.
 # Be aware that the target commands are only tested with Docker which is
@@ -12,7 +20,7 @@ all: build push
 
 .PHONY: build
 build:
-	$(CONTAINER_TOOL) build -t $(IMAGE) .
+	$(CONTAINER_TOOL) build -t $(IMAGE) -f $(DOCKERFILE) .
 
 .PHONY: push
 push:
@@ -25,7 +33,7 @@ PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 
 .PHONY: buildx
 buildx:
-	$(CONTAINER_TOOL) buildx build --platform=$(PLATFORMS) -t $(IMAGE) .
+	$(CONTAINER_TOOL) buildx build --platform=$(PLATFORMS) -t $(IMAGE) -f $(DOCKERFILE) .
 
 .PHONY: buildx-push
 buildx-push: buildx push
