@@ -65,6 +65,7 @@ RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/k
 
 # Init neovim
 RUN nvim "+Lazy! install" +qa! 
+RUN cd /root/.local/share/nvim/lazy/blink.cmp && cargo build --release
 RUN nvim "+TSInstallSync all" +qa! 
 RUN nvim "+MasonInstallAll" +qa! 
 
