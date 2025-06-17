@@ -1,10 +1,14 @@
 FROM ubuntu:24.04
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Update apt
-RUN apt-get update -y && apt install -y software-properties-common git yadm neovim
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/root/.krew/bin:$PATH" \
+  XDG_CACHE_HOME=/home/linuxbrew/.cache
+
+# Install basic tools
+RUN apt-get update -y && apt-get install -y software-properties-common build-essential procps curl file git
 
 # Enable man pages
-RUN apt install -y man-db unminimize && yes | unminimize
+RUN apt-get install -y man-db unminimize && yes | unminimize
 
 # Set timezone and locale
 RUN DEBIAN_FRONTEND=noninteractive apt install -y tzdata locales && \
@@ -15,27 +19,45 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y tzdata locales && \
 
 # Install fish shell
 RUN apt-add-repository ppa:fish-shell/release-4 && \
-  apt update -y && \
-  apt install fish -y
-
-# Install kubectl
-RUN apt-get install -y apt-transport-https ca-certificates curl gnupg && \ 
-  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
-  && chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg && \
-  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list && \
-  chmod 644 /etc/apt/sources.list.d/kubernetes.list && \
   apt-get update -y && \
-  apt-get install -y kubectl
+  apt-get install fish -y
 
-# Install dotfiles
-RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git
+# 1. Delete the default ubuntu user & group UID=1000 GID=1000 in Ubuntu 23.04+ that conflicts with the linuxbrew user.
+# 2. Add user linuxbrew.
+RUN touch /var/mail/ubuntu && chown ubuntu /var/mail/ubuntu && userdel -r ubuntu; true && \
+  useradd -u 1000 --create-home --shell /bin/bash --user-group linuxbrew
 
-# Init neovim
-RUN nvim "+Lazy! install" +MasonToolsInstallSync "+TSInstallSync all" +q! 
-
-# Cleanup apt
+# Cleanup apt cahce
 RUN apt-get clean autoclean && \
   apt-get autoremove --yes && \
   rm -rf /var/lib/{apt,dpkg,cache,log}/
+
+USER linuxbrew
+
+# Install homebrew
+RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install tools use homebrew
+RUN brew install kubectl krew kubie kustomize k9s kubecolor helm neovim cfssl openssl fx jq yq yadm
+
+USER root
+
+# # Install kubectl plugins use krew
+RUN kubectl krew index add kvaps https://github.com/kvaps/krew-index && \
+  kubectl krew update && \
+  kubectl krew install ctx && \
+  kubectl krew install kc && \
+  kubectl krew install neat && \
+  kubectl krew install ns && \
+  kubectl krew install view-cert && \
+  kubectl krew install whoami && \
+  kubectl krew install kvaps/node-shell && \
+  kubectl krew install klock 
+
+# Init dotfiles
+RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --hard HEAD
+
+# Init neovim
+RUN nvim "+Lazy! install" +MasonToolsInstallSync "+TSInstallSync all" +q! 
 
 CMD ["sleep", "infinity"]
