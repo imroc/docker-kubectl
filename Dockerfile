@@ -64,9 +64,9 @@ RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --h
 RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas
 
 # Init neovim
-RUN nvim "+Lazy! install" +qa! 
+RUN nvim --headless "+Lazy! install" +qa! 
 RUN cd /root/.local/share/nvim/lazy/blink.cmp && cargo build --release
-RUN nvim "+TSInstallSync all" +qa! 
-RUN nvim "+MasonInstallAll" +qa! 
+RUN nvim --headless "+TSInstallSync all" +qa! 
+RUN nvim --headless "+MasonInstallAll" +qa! 
 
 CMD ["sleep", "infinity"]
