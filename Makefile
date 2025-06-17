@@ -1,8 +1,8 @@
 SHELL := /bin/bash
 
-ifdef RICH
-IMAGE := docker.io/imroc/kubectl:rich
-DOCKERFILE := Dockerfile.rich
+ifdef SLIM
+IMAGE := docker.io/imroc/kubectl:slim
+DOCKERFILE := Dockerfile.slim
 else
 IMAGE := docker.io/imroc/kubectl:latest
 DOCKERFILE := Dockerfile
