@@ -10,4 +10,4 @@ Then you can exec into the pod and run `kubectl`.
 
 ## Slim Image
 
-The default image (`latest` tag) size is very large, if you don't need that much tools, you can use the slim image (replace `latest` tag with `slim`).
+The default image (`latest` tag) size is very large (1GB+), if you don't need that much tools, you can use the slim image (replace `latest` tag with `slim`).

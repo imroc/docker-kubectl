@@ -34,27 +34,35 @@ USER linuxbrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH" \
   XDG_CACHE_HOME=/home/linuxbrew/.cache
-RUN brew install kubectl krew kubie kustomize k9s kubecolor helm neovim cfssl openssl fx jq yq yadm
+RUN brew install kubectl krew kubie kustomize k9s kubecolor helm neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza git-delta tig lazygit lua luarocks luajit python
+RUN pip3 install virtualenv neovim --break-system-packages
 
 USER root
 
 # # Install kubectl plugins use krew
 ENV PATH="/root/.krew/bin:$PATH"
-RUN kubectl krew index add kvaps https://github.com/kvaps/krew-index && \
-  kubectl krew update && \
+RUN kubectl krew update && \
   kubectl krew install ctx && \
   kubectl krew install kc && \
   kubectl krew install neat && \
   kubectl krew install ns && \
   kubectl krew install view-cert && \
   kubectl krew install whoami && \
-  kubectl krew install kvaps/node-shell && \
-  kubectl krew install klock 
+  kubectl krew install klock  && \
+  kubectl krew index add kvaps https://github.com/kvaps/krew-index && \
+  kubectl krew install kvaps/node-shell
 
-# Init dotfiles
+# # Init dotfiles
 RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --hard HEAD
 
+# Init kubeschemas
+RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas
+
+# Install rust
+ENV PATH="/root/.cargo/bin:$PATH"
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+
 # Init neovim
-RUN nvim "+Lazy! install" +MasonToolsInstallSync "+TSInstallSync all" +q! 
+RUN nvim "+Lazy! install" +MasonInstallAll "+TSInstallSync all" +qa! 
 
 CMD ["sleep", "infinity"]
