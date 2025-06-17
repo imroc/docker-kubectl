@@ -1,0 +1,31 @@
+SHELL := /bin/bash
+IMAGE := docker.io/imroc/kubectl:latest
+
+# CONTAINER_TOOL defines the container tool to be used for building images.
+# Be aware that the target commands are only tested with Docker which is
+# scaffolded by default. However, you might want to replace it to use other
+# tools. (i.e. podman)
+CONTAINER_TOOL ?= docker
+
+.PHONY: all
+all: build push
+
+.PHONY: build
+build:
+	$(CONTAINER_TOOL) build -t $(IMAGE) .
+
+.PHONY: push
+push:
+	$(CONTAINER_TOOL) push $(IMAGE)
+
+.PHONY: build-push
+build-push: build push
+
+PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
+
+.PHONY: buildx
+buildx:
+	$(CONTAINER_TOOL) buildx build --platform=$(PLATFORMS) -t $(IMAGE) .
+
+.PHONY: buildx-push
+buildx-push: buildx push
