@@ -61,7 +61,7 @@ RUN rustup toolchain install nightly
 # Init kubeschemas
 RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas
 # # Init dotfiles
-RUN yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --hard HEAD && yadm config local.class kube
+RUN echo "test" && yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --hard HEAD && yadm config local.class kube
 
 # Init neovim
 RUN nvim --headless "+Lazy! install" +qa! 
