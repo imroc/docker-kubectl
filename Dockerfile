@@ -34,12 +34,16 @@ USER linuxbrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH" \
   XDG_CACHE_HOME=/home/linuxbrew/.cache
-RUN brew install kubectl krew kubie kustomize k9s kubecolor helm neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza git-delta tig lazygit lua luarocks luajit python node deno
-RUN pip3 install virtualenv neovim --break-system-packages && npm install -g neovim
+RUN brew install kubectl krew kubie kustomize k9s kubecolor helm \
+  neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza \
+  git-delta tig lazygit lua luarocks luajit python node deno
 
 USER root
+# Install neovim dependencies
+RUN pip3 install virtualenv neovim --break-system-packages && \
+  npm install -g neovim
 
-# # Install kubectl plugins use krew
+# Install kubectl plugins use krew
 ENV PATH="/root/.krew/bin:$PATH"
 RUN kubectl krew update && \
   kubectl krew install ctx && \
@@ -52,21 +56,14 @@ RUN kubectl krew update && \
   kubectl krew install node-shell && \
   kubectl krew install reap
 
-
-# Install rust
-ENV PATH="/root/.cargo/bin:$PATH"
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-RUN rustup toolchain install nightly
-
-# Init kubeschemas
-RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas
-# # Init dotfiles
-RUN echo "test" && yadm clone --depth 1 https://github.com/imroc/dotfiles.git && yadm reset --hard HEAD && yadm config local.class kube
+# Init dotfiles
+RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas && \
+  yadm clone --depth 1 https://github.com/imroc/dotfiles.git && \
+  yadm reset --hard HEAD && \
+  yadm config local.class kube
 
 # Init neovim
-RUN nvim --headless "+Lazy! install" +qa! 
-RUN cd /root/.local/share/nvim/lazy/blink.cmp && cargo build --release
-RUN nvim --headless "+TSInstallSync all" +qa! 
-RUN nvim --headless "+MasonInstallAll" +qa! 
+RUN nvim --headless "+Lazy! sync" +qa! && \
+  nvim --headless "+Lazy! load all" "+MasonInstallAll" +qa! 
 
 CMD ["sleep", "infinity"]

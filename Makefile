@@ -29,7 +29,7 @@ push:
 .PHONY: build-push
 build-push: build push
 
-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
+PLATFORMS ?= linux/arm64,linux/amd64
 
 .PHONY: buildx
 buildx:
