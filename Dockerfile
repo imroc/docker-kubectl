@@ -34,8 +34,8 @@ USER linuxbrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH" \
   XDG_CACHE_HOME=/home/linuxbrew/.cache
-RUN brew install kubectl krew kubie kustomize k9s kubecolor helm neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza git-delta tig lazygit lua luarocks luajit python
-RUN pip3 install virtualenv neovim --break-system-packages
+RUN brew install kubectl krew kubie kustomize k9s kubecolor helm neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza git-delta tig lazygit lua luarocks luajit python node deno
+RUN pip3 install virtualenv neovim --break-system-packages && npm install -g neovim
 
 USER root
 
