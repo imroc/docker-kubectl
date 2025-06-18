@@ -49,8 +49,9 @@ RUN kubectl krew update && \
   kubectl krew install view-cert && \
   kubectl krew install whoami && \
   kubectl krew install klock  && \
-  kubectl krew index add kvaps https://github.com/kvaps/krew-index && \
-  kubectl krew install kvaps/node-shell
+  kubectl krew install node-shell && \
+  kubectl krew install reap
+
 
 # Install rust
 ENV PATH="/root/.cargo/bin:$PATH"
