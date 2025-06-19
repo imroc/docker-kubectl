@@ -5,10 +5,12 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG LOCALE=zh_CN.UTF-8
 
 # Install basic tools
-RUN apt-get update -y && apt-get install -y software-properties-common build-essential procps curl file git sudo gcc tzdata locales
+RUN apt-get update -y && \
+  apt-get install -y software-properties-common build-essential \
+  procps curl file git sudo gcc tzdata locales man-db unminimize
 
 # Enable man pages
-RUN apt-get install -y man-db unminimize && yes | unminimize
+RUN yes | unminimize
 
 # Set timezone and locale
 RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
@@ -34,27 +36,20 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
 
 # Install tools with homebrew
 RUN brew install kubectl krew kubie kustomize k9s kubecolor helm \
-  neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza fish \
-  git-delta tig lazygit lua luarocks luajit python node deno expect
+  neovim vim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza \
+  git-delta tig lazygit lua luarocks luajit python node deno expect fish
 
-# Setup kubectl
+# Setup kubectl plugins
 ENV PATH="/home/${USER_NAME}/.krew/bin:$PATH"
 RUN kubectl krew update && \
-  kubectl krew install ctx && \
-  kubectl krew install kc && \
-  kubectl krew install neat && \
-  kubectl krew install ns && \
-  kubectl krew install view-cert && \
-  kubectl krew install whoami && \
-  kubectl krew install klock  && \
-  kubectl krew install node-shell && \
-  kubectl krew install reap
+  kubectl krew install ctx ns kc neat whoami view-cert klock node-shell reap
 
 # Setup dotfiles
 RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /home/${USER_NAME}/.config/kubeschemas && \
   yadm clone --depth 1 https://github.com/imroc/dotfiles.git && \
   yadm reset --hard HEAD && \
-  yadm config local.class kube
+  yadm config local.class kube && \
+  bat cache --build
 
 # Setup neovim
 RUN npm install -g neovim && \ 
@@ -63,6 +58,7 @@ RUN npm install -g neovim && \
   nvim --headless "+Lazy! load all" "+MasonInstallAll" +qa! 
 
 # Setup fish shell
-RUN chsh -s /home/linuxbrew/.linuxbrew/bin/fish && expect -c 'spawn fish; send "exit\n"; expect eof'
+RUN sudo chsh -s /home/linuxbrew/.linuxbrew/bin/fish ${USER_NAME} && \
+  expect -c 'spawn fish; send "exit\n"; expect eof'
 
 CMD ["sleep", "infinity"]
