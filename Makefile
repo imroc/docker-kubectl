@@ -48,7 +48,6 @@ buildx:
 .PHONY: buildx-push
 buildx-push: buildx push
 
-# Release target builds and pushes multi-arch images with date-based tags
 .PHONY: release-rich
 release-rich:
 	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
