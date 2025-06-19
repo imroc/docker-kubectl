@@ -49,14 +49,19 @@ buildx:
 buildx-push: buildx push
 
 # Release target builds and pushes multi-arch images with date-based tags
-.PHONY: release
-release:
+.PHONY: release-rich
+release-rich:
 	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
 	TAG=$(DATE) make buildx-push
 	$(CONTAINER_TOOL) tag $(REPO):$(DATE) $(REPO):latest
 	$(CONTAINER_TOOL) push $(REPO):latest
 
-.PHONY: release-all
-release-all:
-	make release
-	SLIM=1 make release
+.PHONY: release-slim
+release-slim:
+	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
+	TAG=slim-$(DATE) SLIM=1 make buildx-push
+	$(CONTAINER_TOOL) tag $(REPO):slim-$(DATE) $(REPO):slim
+	$(CONTAINER_TOOL) push $(REPO):slim
+
+.PHONY: release
+release: release-rich release-slim
