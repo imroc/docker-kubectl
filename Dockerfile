@@ -1,15 +1,15 @@
 FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
+ARG USERNAME=kube
 
 # Install basic tools
-RUN apt-get update -y && apt-get install -y software-properties-common build-essential procps curl file git
+RUN apt-get update -y && apt-get install -y software-properties-common build-essential procps curl file git sudo build-essential gcc tzdata locales
 
 # Enable man pages
 RUN apt-get install -y man-db unminimize && yes | unminimize
 
 # Set timezone and locale
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata locales && \
-  ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
   dpkg-reconfigure -f noninteractive tzdata && \
   locale-gen zh_CN.UTF-8 && \
   update-locale LANG=zh_CN.UTF-8
@@ -21,30 +21,29 @@ RUN apt-add-repository ppa:fish-shell/release-4 && \
   chsh -s /usr/bin/fish
 
 # Add user linuxbrew to replace the default ubuntu user & group (UID=1000 GID=1000) in Ubuntu 23.04+
-RUN touch /var/mail/ubuntu && chown ubuntu /var/mail/ubuntu && userdel -r ubuntu; true && \
-  useradd -u 1000 --create-home --shell /bin/bash --user-group linuxbrew
+RUN useradd --create-home --user-group $USERNAME && \
+  usermod -aG sudo $USERNAME && \
+  echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/nopasswd
 
 # Cleanup apt cahce
 RUN apt-get clean autoclean && \
   apt-get autoremove --yes && \
   rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-# Install homebrew and tools
-USER linuxbrew
+USER kube
+
+# Install homebrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH" \
   XDG_CACHE_HOME=/home/linuxbrew/.cache
+
+# Install tools with homebrew
 RUN brew install kubectl krew kubie kustomize k9s kubecolor helm \
-  neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza \
+  neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza fish \
   git-delta tig lazygit lua luarocks luajit python node deno expect
 
-USER root
-# Install neovim dependencies
-RUN pip3 install virtualenv neovim --break-system-packages && \
-  npm install -g neovim
-
-# Install kubectl plugins use krew
-ENV PATH="/root/.krew/bin:$PATH"
+# Setup kubectl
+ENV PATH="/home/$USERNAME/.krew/bin:$PATH"
 RUN kubectl krew update && \
   kubectl krew install ctx && \
   kubectl krew install kc && \
@@ -56,17 +55,19 @@ RUN kubectl krew update && \
   kubectl krew install node-shell && \
   kubectl krew install reap
 
-# Init dotfiles
-RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas && \
+# Setup dotfiles
+RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /home/$USERNAME/.config/kubeschemas && \
   yadm clone --depth 1 https://github.com/imroc/dotfiles.git && \
   yadm reset --hard HEAD && \
   yadm config local.class kube
 
-# Init neovim
-RUN nvim --headless "+Lazy! sync" +qa! && \
+# Setup neovim
+RUN npm install -g neovim && \ 
+  pip3 install virtualenv neovim --break-system-packages && \
+  nvim --headless "+Lazy! sync" +qa! && \
   nvim --headless "+Lazy! load all" "+MasonInstallAll" +qa! 
 
-# Init fish_variables
-RUN expect -c 'spawn fish; send "exit\n"; expect eof'
+# Setup fish shell
+RUN chsh -s /home/linuxbrew/.linuxbrew/bin/fish && expect -c 'spawn fish; send "exit\n"; expect eof'
 
 CMD ["sleep", "infinity"]
