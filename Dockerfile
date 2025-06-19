@@ -1,4 +1,6 @@
 FROM ubuntu:24.04
+ARG USER_ID=666
+ARG USER_NAME=kube
 ARG DEBIAN_FRONTEND=noninteractive
 ARG LOCALE=zh_CN.UTF-8
 
@@ -11,26 +13,34 @@ RUN apt-get install -y man-db unminimize && yes | unminimize
 # Set timezone and locale
 RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
   dpkg-reconfigure -f noninteractive tzdata && \
-  locale-gen $LOCALE && \
-  update-locale LANG=$LOCALE
+  locale-gen ${LOCALE} && \
+  update-locale LANG=${LOCALE}
 
 # Cleanup apt cahce
 RUN apt-get clean autoclean && \
   apt-get autoremove --yes && \
   rm -rf /var/lib/{apt,dpkg,cache,log}/
 
+# Add user linuxbrew user
+RUN useradd --create-home --shell /bin/bash --user-group linuxbrew && \
+  echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers && \
+  useradd --create-home --shell /bin/bash -u ${USER_ID} -g linuxbrew ${USER_NAME}
+
+USER linuxbrew
+
 # Install homebrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH" \
-  XDG_CACHE_HOME=/home/linuxbrew/.cache
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
 
 # Install tools with homebrew
 RUN brew install kubectl krew kubie kustomize k9s kubecolor helm \
   neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza fish \
   git-delta tig lazygit lua luarocks luajit python node deno expect
 
+USER ${USER_NAME}
+
 # Setup kubectl
-ENV PATH="/root/.krew/bin:$PATH"
+ENV PATH="/home/${USER_NAME}/.krew/bin:$PATH"
 RUN kubectl krew update && \
   kubectl krew install ctx && \
   kubectl krew install kc && \
@@ -43,7 +53,7 @@ RUN kubectl krew update && \
   kubectl krew install reap
 
 # Setup dotfiles
-RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas && \
+RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /home/${USER_NAME}/.config/kubeschemas && \
   yadm clone --depth 1 https://github.com/imroc/dotfiles.git && \
   yadm reset --hard HEAD && \
   yadm config local.class kube
