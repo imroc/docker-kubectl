@@ -22,11 +22,11 @@ RUN apt-get clean autoclean && \
   rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Add user linuxbrew user
-RUN useradd --create-home --shell /bin/bash --user-group linuxbrew && \
-  echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers && \
-  useradd --create-home --shell /bin/bash -u ${USER_ID} -g linuxbrew ${USER_NAME}
+RUN useradd --create-home --shell /bin/bash -u ${USER_ID} --user-group ${USER_NAME} && \
+  echo "${USER_NAME} ALL=(ALL) NOPASSWD:ALL" >>/etc/sudoers && \
+  echo "linuxbrew ALL=(ALL) NOPASSWD:ALL" >>/etc/sudoers
 
-USER linuxbrew
+USER ${USER_NAME}
 
 # Install homebrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -36,8 +36,6 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
 RUN brew install kubectl krew kubie kustomize k9s kubecolor helm \
   neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza fish \
   git-delta tig lazygit lua luarocks luajit python node deno expect
-
-USER ${USER_NAME}
 
 # Setup kubectl
 ENV PATH="/home/${USER_NAME}/.krew/bin:$PATH"
