@@ -1,12 +1,21 @@
 SHELL := /bin/bash
+REPO ?= docker.io/imroc/kubectl
+
+ifndef TAG
+ifdef SLIM
+TAG := slim
+else
+TAG := latest
+endif
+endif
 
 ifdef SLIM
-IMAGE := docker.io/imroc/kubectl:slim
 DOCKERFILE := Dockerfile.slim
 else
-IMAGE := docker.io/imroc/kubectl:latest
 DOCKERFILE := Dockerfile
 endif
+
+IMAGE := $(REPO):$(TAG)
 
 # CONTAINER_TOOL defines the container tool to be used for building images.
 # Be aware that the target commands are only tested with Docker which is
@@ -38,3 +47,16 @@ buildx:
 
 .PHONY: buildx-push
 buildx-push: buildx push
+
+# Release target builds and pushes multi-arch images with date-based tags
+.PHONY: release
+release:
+	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
+	TAG=$(DATE) make buildx-push
+	$(CONTAINER_TOOL) tag $(REPO):$(DATE) $(REPO):latest
+	$(CONTAINER_TOOL) push $(REPO):latest
+
+.PHONY: release-all
+release-all:
+	make release
+	SLIM=1 make release
