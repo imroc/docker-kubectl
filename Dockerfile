@@ -1,9 +1,9 @@
 FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
-ARG USERNAME=kube
+ARG LOCALE=zh_CN.UTF-8
 
 # Install basic tools
-RUN apt-get update -y && apt-get install -y software-properties-common build-essential procps curl file git sudo build-essential gcc tzdata locales
+RUN apt-get update -y && apt-get install -y software-properties-common build-essential procps curl file git sudo gcc tzdata locales
 
 # Enable man pages
 RUN apt-get install -y man-db unminimize && yes | unminimize
@@ -11,26 +11,13 @@ RUN apt-get install -y man-db unminimize && yes | unminimize
 # Set timezone and locale
 RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
   dpkg-reconfigure -f noninteractive tzdata && \
-  locale-gen zh_CN.UTF-8 && \
-  update-locale LANG=zh_CN.UTF-8
-
-# Install fish shell
-RUN apt-add-repository ppa:fish-shell/release-4 && \
-  apt-get update -y && \
-  apt-get install fish -y && \
-  chsh -s /usr/bin/fish
-
-# Add user linuxbrew to replace the default ubuntu user & group (UID=1000 GID=1000) in Ubuntu 23.04+
-RUN useradd --create-home --user-group $USERNAME && \
-  usermod -aG sudo $USERNAME && \
-  echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/nopasswd
+  locale-gen $LOCALE && \
+  update-locale LANG=$LOCALE
 
 # Cleanup apt cahce
 RUN apt-get clean autoclean && \
   apt-get autoremove --yes && \
   rm -rf /var/lib/{apt,dpkg,cache,log}/
-
-USER kube
 
 # Install homebrew
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -43,7 +30,7 @@ RUN brew install kubectl krew kubie kustomize k9s kubecolor helm \
   git-delta tig lazygit lua luarocks luajit python node deno expect
 
 # Setup kubectl
-ENV PATH="/home/$USERNAME/.krew/bin:$PATH"
+ENV PATH="/root/.krew/bin:$PATH"
 RUN kubectl krew update && \
   kubectl krew install ctx && \
   kubectl krew install kc && \
@@ -56,7 +43,7 @@ RUN kubectl krew update && \
   kubectl krew install reap
 
 # Setup dotfiles
-RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /home/$USERNAME/.config/kubeschemas && \
+RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/kubeschemas && \
   yadm clone --depth 1 https://github.com/imroc/dotfiles.git && \
   yadm reset --hard HEAD && \
   yadm config local.class kube
