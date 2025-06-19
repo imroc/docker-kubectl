@@ -36,7 +36,7 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH" 
   XDG_CACHE_HOME=/home/linuxbrew/.cache
 RUN brew install kubectl krew kubie kustomize k9s kubecolor helm \
   neovim cfssl openssl fx jq yq yadm zoxide bat ripgrep fzf eza \
-  git-delta tig lazygit lua luarocks luajit python node deno
+  git-delta tig lazygit lua luarocks luajit python node deno expect
 
 USER root
 # Install neovim dependencies
@@ -65,5 +65,8 @@ RUN git clone --depth 1 https://github.com/imroc/kubeschemas.git /root/.config/k
 # Init neovim
 RUN nvim --headless "+Lazy! sync" +qa! && \
   nvim --headless "+Lazy! load all" "+MasonInstallAll" +qa! 
+
+# Init fish_variables
+RUN expect -c 'spawn fish; send "exit\n"; expect eof'
 
 CMD ["sleep", "infinity"]
