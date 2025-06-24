@@ -52,15 +52,16 @@ buildx-push: buildx push
 release-rich:
 	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
 	TAG=$(DATE) make buildx-push
-	$(CONTAINER_TOOL) tag $(REPO):$(DATE) $(REPO):latest
-	$(CONTAINER_TOOL) push $(REPO):latest
+	make buildx-push
 
 .PHONY: release-slim
 release-slim:
 	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
 	TAG=slim-$(DATE) SLIM=1 make buildx-push
-	$(CONTAINER_TOOL) tag $(REPO):slim-$(DATE) $(REPO):slim
-	$(CONTAINER_TOOL) push $(REPO):slim
+	SLIM=1 make buildx-push
 
 .PHONY: release
 release: release-rich release-slim
+
+update-bin:
+	cp ~/.local/bin/*kube*.sh ./bin/
