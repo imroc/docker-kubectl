@@ -48,8 +48,8 @@ buildx:
 .PHONY: buildx-push
 buildx-push: buildx push
 
-.PHONY: release-rich
-release-rich:
+.PHONY: release
+release:
 	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
 	TAG=$(DATE) make buildx-push
 	make buildx-push
@@ -60,8 +60,8 @@ release-slim:
 	TAG=slim-$(DATE) SLIM=1 make buildx-push
 	SLIM=1 make buildx-push
 
-.PHONY: release
-release: release-rich release-slim
+.PHONY: release-all
+releasea-all: release release-slim
 
 update-bin:
 	cp ~/.local/bin/*kube*.sh ./bin/
