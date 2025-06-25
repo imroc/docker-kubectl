@@ -51,8 +51,8 @@ buildx-push: buildx push
 .PHONY: release
 release:
 	$(eval DATE := $(shell date '+%Y.%-m.%-d'))
-	TAG=$(DATE) make buildx-push
-	make buildx-push
+	TAG=$(DATE) make build-push
+	make build-push
 
 .PHONY: release-slim
 release-slim:
